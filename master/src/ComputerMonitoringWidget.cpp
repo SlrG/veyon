@@ -58,7 +58,7 @@ ComputerMonitoringWidget::ComputerMonitoringWidget( QWidget *parent ) :
 	setUidRole( ComputerControlListModel::UidRole );
 
 	connect( this, &QListView::doubleClicked, this, &ComputerMonitoringWidget::runDoubleClickFeature );
-	connect( this, &QListView::customContextMenuRequested,
+    connect( this, &QListView::customContextMenuRequested,
 			 this, [this]( QPoint pos ) { showContextMenu( mapToGlobal( pos ) ); } );
 
 	initializeView( this );
@@ -272,6 +272,70 @@ void ComputerMonitoringWidget::runDoubleClickFeature( const QModelIndex& index )
 
 
 
+void ComputerMonitoringWidget::mousePressAndHoldFeature( )
+{
+   Q_EMIT mousePressAndHold( );
+   const Feature& feature = master()->featureManager().feature( VeyonCore::config().computerDoubleClickFeature() );
+   const auto selectedInterfaces = selectedComputerControlInterfaces();
+   if ( !m_ignoreMousePressAndHoldEvent &&
+        !isFeatureOrSubFeatureActive( selectedInterfaces, feature.uid() ) &&
+        selectedInterfaces.count() > 0 &&
+        selectedInterfaces.count() < 2 &&
+        selectedInterfaces.first()->state() == ComputerControlInterface::State::Connected &&
+        selectedInterfaces.first()->hasValidFramebuffer() )
+   {
+        m_ignoreMousePressAndHoldEvent = true;
+        if( feature.isValid() )
+        {
+            runFeature( feature );
+        }
+   }
+}
+
+
+
+void ComputerMonitoringWidget::mousePressEvent( QMouseEvent* event )
+{
+    if(event->type() == QEvent::MouseButtonPress)
+    {
+        if( !m_ignoreMousePressAndHoldEvent )
+        {
+            t_mousePressAndHold.setInterval( 500 );
+            t_mousePressAndHold.start();
+            connect(&t_mousePressAndHold, &QTimer::timeout, this, &ComputerMonitoringWidget::mousePressAndHoldFeature );
+        }
+        QListView::mousePressEvent(event);
+    }
+}
+
+
+
+void ComputerMonitoringWidget::mouseReleaseEvent( QMouseEvent* event )
+{
+    if(event->type() == QEvent::MouseButtonRelease)
+    {
+        t_mousePressAndHold.stop();
+        m_ignoreMousePressAndHoldEvent = false;
+        Q_EMIT mousePressAndHoldRelease( );
+        QListView::mouseReleaseEvent(event);
+    }
+}
+
+
+
+void ComputerMonitoringWidget::mouseMoveEvent( QMouseEvent* event )
+{
+    if(event->type() == QEvent::MouseMove)
+    {
+        t_mousePressAndHold.stop();
+        m_ignoreMousePressAndHoldEvent = false;
+        Q_EMIT mousePressAndHoldRelease( );
+        QListView::mouseMoveEvent(event);
+    }
+}
+
+
+
 void ComputerMonitoringWidget::resizeEvent( QResizeEvent* event )
 {
 	FlexibleListView::resizeEvent( event );
@@ -312,3 +376,5 @@ void ComputerMonitoringWidget::wheelEvent( QWheelEvent* event )
 		QListView::wheelEvent( event );
 	}
 }
+
+

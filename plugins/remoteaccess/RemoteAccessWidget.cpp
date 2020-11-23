@@ -36,6 +36,7 @@
 #include "VeyonMasterInterface.h"
 #include "Computer.h"
 #include "ComputerControlInterface.h"
+#include "/home/michael/Devel/veyon/master/src/ComputerMonitoringWidget.h"
 #include "PlatformCoreFunctions.h"
 #include "ToolButton.h"
 #include "Screenshot.h"
@@ -255,7 +256,7 @@ RemoteAccessWidget::RemoteAccessWidget( const ComputerControlInterface::Pointer&
 	m_toolBar( new RemoteAccessWidgetToolBar( this, startViewOnly, showViewOnlyToggleButton ) )
 {
 	const auto openOnMasterScreen = VeyonCore::config().openOnMasterScreen();
-	auto master = VeyonCore::instance()->findChild<VeyonMasterInterface *>();
+    const auto master = VeyonCore::instance()->findChild<VeyonMasterInterface *>();
 	const auto masterWindow = master->mainWindow();
 	if( master && openOnMasterScreen )
 	{
@@ -281,6 +282,7 @@ RemoteAccessWidget::RemoteAccessWidget( const ComputerControlInterface::Pointer&
 	showNormal();
 
 	toggleViewOnly( startViewOnly );
+
 }
 
 
