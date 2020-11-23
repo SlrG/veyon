@@ -148,6 +148,20 @@ void MasterConfigurationPage::populateFeatureComboBox()
 													 feature.uid() );
 		}
 	}
+
+	ui->computerLeftClickAndHoldFeature->addItem( QIcon(), tr( "<no feature>" ), QUuid() );
+	ui->computerLeftClickAndHoldFeature->insertSeparator( ui->computerDoubleClickFeature->count() );
+
+	for( const auto& feature : m_featureManager.features() )
+	{
+		if( feature.testFlag( Feature::Master ) &&
+			feature.testFlag( Feature::Internal ) == false )
+		{
+			ui->computerLeftClickAndHoldFeature->addItem( QIcon( feature.iconUrl() ),
+													 feature.displayName(),
+													 feature.uid() );
+		}
+	}
 }
 
 

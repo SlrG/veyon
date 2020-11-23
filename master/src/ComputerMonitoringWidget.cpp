@@ -275,7 +275,7 @@ void ComputerMonitoringWidget::runDoubleClickFeature( const QModelIndex& index )
 void ComputerMonitoringWidget::mousePressAndHoldFeature( )
 {
    Q_EMIT mousePressAndHold( );
-   const Feature& feature = master()->featureManager().feature( VeyonCore::config().computerDoubleClickFeature() );
+   const Feature& feature = master()->featureManager().feature( VeyonCore::config().computerLeftClickAndHoldFeature() );
    const auto selectedInterfaces = selectedComputerControlInterfaces();
    if ( !m_ignoreMousePressAndHoldEvent &&
         !isFeatureOrSubFeatureActive( selectedInterfaces, feature.uid() ) &&
