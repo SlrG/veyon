@@ -61,7 +61,7 @@ public:
 
 	QString description() const override
 	{
-		return tr( "Remote view or control a computer" );
+        return tr( "Preview, remote view or control a computer" );
 	}
 
 	QString vendor() const override
@@ -77,10 +77,10 @@ public:
 	const FeatureList& featureList() const override;
 
 	bool controlFeature( Feature::Uid featureUid, Operation operation, const QVariantMap& arguments,
-						const ComputerControlInterfaceList& computerControlInterfaces ) override;
+                        const ComputerControlInterfaceList& computerControlInterfaces ) override;
 
 	bool startFeature( VeyonMasterInterface& master, const Feature& feature,
-					   const ComputerControlInterfaceList& computerControlInterfaces ) override;
+                       const ComputerControlInterfaceList& computerControlInterfaces ) override;
 
 	QString commandLineModuleName() const override
 	{
@@ -97,17 +97,20 @@ public:
 	QString commandHelp( const QString& command ) const override;
 
 private Q_SLOTS:
-	CommandLinePluginInterface::RunResult handle_view( const QStringList& arguments );
+    CommandLinePluginInterface::RunResult handle_preview( const QStringList& arguments );
+    CommandLinePluginInterface::RunResult handle_view( const QStringList& arguments );
 	CommandLinePluginInterface::RunResult handle_control( const QStringList& arguments );
 	CommandLinePluginInterface::RunResult handle_help( const QStringList& arguments );
 
 private:
-	bool remoteViewEnabled() const;
+    bool remotePreviewEnabled() const;
+    bool remoteViewEnabled() const;
 	bool remoteControlEnabled() const;
 	bool initAuthentication();
-	bool remoteAccess( const QString& hostAddress, bool viewOnly );
+    bool remoteAccess( const QString& hostAddress, bool viewOnly, bool preview );
 
-	const Feature m_remoteViewFeature;
+    const Feature m_remotePreviewFeature;
+    const Feature m_remoteViewFeature;
 	const Feature m_remoteControlFeature;
 	const FeatureList m_features;
 

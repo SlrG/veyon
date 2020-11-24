@@ -36,7 +36,14 @@
 
 RemoteAccessFeaturePlugin::RemoteAccessFeaturePlugin( QObject* parent ) :
 	QObject( parent ),
-	m_remoteViewFeature( QStringLiteral( "RemoteView" ),
+    m_remotePreviewFeature( QStringLiteral( "RemotePreview" ),
+                         Feature::Session | Feature::Master,
+                         Feature::Uid( "fddd638a-90a7-45a1-a339-ea6409a5eee5" ),
+                         Feature::Uid(),
+                         tr( "Remote preview" ), {},
+                         tr( "Open a remote preview for a computer without interaction." ),
+                         QStringLiteral(":/remoteaccess/kmag.png") ),
+    m_remoteViewFeature( QStringLiteral( "RemoteView" ),
 						 Feature::Session | Feature::Master,
 						 Feature::Uid( "a18e545b-1321-4d4e-ac34-adc421c6e9c8" ),
 						 Feature::Uid(),
@@ -50,8 +57,9 @@ RemoteAccessFeaturePlugin::RemoteAccessFeaturePlugin( QObject* parent ) :
 							tr( "Remote control" ), {},
 							tr( "Open a remote control window for a computer." ),
 							QStringLiteral(":/remoteaccess/krdc.png") ),
-	m_features( { m_remoteViewFeature, m_remoteControlFeature } ),
+    m_features( { m_remotePreviewFeature, m_remoteViewFeature, m_remoteControlFeature } ),
 	m_commands( {
+{ QStringLiteral("preview"), m_remotePreviewFeature.displayName() },
 { QStringLiteral("view"), m_remoteViewFeature.displayName() },
 { QStringLiteral("control"), m_remoteControlFeature.displayName() },
 { QStringLiteral("help"), tr( "Show help about command" ) },
@@ -69,7 +77,7 @@ const FeatureList &RemoteAccessFeaturePlugin::featureList() const
 
 
 bool RemoteAccessFeaturePlugin::controlFeature( Feature::Uid featureUid, Operation operation, const QVariantMap& arguments,
-											   const ComputerControlInterfaceList& computerControlInterfaces )
+                                               const ComputerControlInterfaceList& computerControlInterfaces )
 {
 	if( hasFeature( featureUid ) == false ||
 		operation != Operation::Start )
@@ -77,8 +85,10 @@ bool RemoteAccessFeaturePlugin::controlFeature( Feature::Uid featureUid, Operati
 		return false;
 	}
 
-	auto viewOnly = featureUid == m_remoteViewFeature.uid();
-	if( remoteControlEnabled() == false )
+    auto preview = featureUid == m_remotePreviewFeature.uid();
+    auto viewOnly = featureUid == m_remoteViewFeature.uid();
+
+    if( remoteControlEnabled() == false && preview )
 	{
 		viewOnly = true;
 	}
@@ -100,7 +110,7 @@ bool RemoteAccessFeaturePlugin::controlFeature( Feature::Uid featureUid, Operati
 	}
 
 	new RemoteAccessWidget( ComputerControlInterface::Pointer::create( computer ), viewOnly,
-							remoteViewEnabled() && remoteControlEnabled() );
+                            remoteViewEnabled() && remoteControlEnabled(), preview );
 
 	return true;
 }
@@ -108,7 +118,7 @@ bool RemoteAccessFeaturePlugin::controlFeature( Feature::Uid featureUid, Operati
 
 
 bool RemoteAccessFeaturePlugin::startFeature( VeyonMasterInterface& master, const Feature& feature,
-											  const ComputerControlInterfaceList& computerControlInterfaces )
+                                              const ComputerControlInterfaceList& computerControlInterfaces )
 {
 	if( hasFeature( feature.uid() ) == false )
 	{
@@ -143,8 +153,10 @@ bool RemoteAccessFeaturePlugin::startFeature( VeyonMasterInterface& master, cons
 		return false;
 	}
 
-	auto viewOnly = feature.uid() == m_remoteViewFeature.uid();
-	if( remoteControlEnabled() == false )
+    auto preview = feature.uid() == m_remotePreviewFeature.uid();
+    auto viewOnly = feature.uid() == m_remoteViewFeature.uid();
+
+    if( remoteControlEnabled() == false && preview)
 	{
 		viewOnly = true;
 	}
@@ -156,7 +168,7 @@ bool RemoteAccessFeaturePlugin::startFeature( VeyonMasterInterface& master, cons
 	else
 	{
 		new RemoteAccessWidget( remoteAccessComputer, viewOnly,
-								remoteViewEnabled() && remoteControlEnabled() );
+                                remoteViewEnabled() && remoteControlEnabled(), preview );
 	}
 
 	return true;
@@ -178,6 +190,23 @@ QString RemoteAccessFeaturePlugin::commandHelp( const QString& command ) const
 
 
 
+CommandLinePluginInterface::RunResult RemoteAccessFeaturePlugin::handle_preview( const QStringList& arguments )
+{
+    if( arguments.count() < 1 )
+    {
+        return NotEnoughArguments;
+    }
+
+    if( remoteViewEnabled() == false )
+    {
+        return InvalidCommand;
+    }
+
+    return remoteAccess( arguments.first(), false, true ) ? Successful : Failed;
+}
+
+
+
 CommandLinePluginInterface::RunResult RemoteAccessFeaturePlugin::handle_view( const QStringList& arguments )
 {
 	if( arguments.count() < 1 )
@@ -190,7 +219,7 @@ CommandLinePluginInterface::RunResult RemoteAccessFeaturePlugin::handle_view( co
 		return InvalidCommand;
 	}
 
-	return remoteAccess( arguments.first(), true ) ? Successful : Failed;
+    return remoteAccess( arguments.first(), true, false ) ? Successful : Failed;
 }
 
 
@@ -207,14 +236,20 @@ CommandLinePluginInterface::RunResult RemoteAccessFeaturePlugin::handle_control(
 		return InvalidCommand;
 	}
 
-	return remoteAccess( arguments.first(), false ) ? Successful : Failed;
+    return remoteAccess( arguments.first(), false, false ) ? Successful : Failed;
 }
 
 
 
 CommandLinePluginInterface::RunResult RemoteAccessFeaturePlugin::handle_help( const QStringList& arguments )
 {
-	if( arguments.value( 0 ) == QLatin1String("view") )
+    if( arguments.value( 0 ) == QLatin1String("preview") )
+    {
+        printf( "\nremoteaccess preview <host>\n\n" );
+        return NoResult;
+    }
+
+    if( arguments.value( 0 ) == QLatin1String("view") )
 	{
 		printf( "\nremoteaccess view <host>\n\n" );
 		return NoResult;
@@ -254,7 +289,7 @@ bool RemoteAccessFeaturePlugin::initAuthentication()
 
 
 
-bool RemoteAccessFeaturePlugin::remoteAccess( const QString& hostAddress, bool viewOnly )
+bool RemoteAccessFeaturePlugin::remoteAccess( const QString& hostAddress, bool viewOnly, bool preview )
 {
 	if( initAuthentication() == false )
 	{
@@ -271,7 +306,7 @@ bool RemoteAccessFeaturePlugin::remoteAccess( const QString& hostAddress, bool v
 	}
 
 	new RemoteAccessWidget( ComputerControlInterface::Pointer::create( remoteComputer ), viewOnly,
-							remoteViewEnabled() && remoteControlEnabled() );
+                            remoteViewEnabled() && remoteControlEnabled(), preview );
 
 	qApp->exec();
 

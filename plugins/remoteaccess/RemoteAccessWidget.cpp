@@ -249,7 +249,7 @@ void RemoteAccessWidgetToolBar::connectionEstablished()
 
 
 RemoteAccessWidget::RemoteAccessWidget( const ComputerControlInterface::Pointer& computerControlInterface,
-										bool startViewOnly, bool showViewOnlyToggleButton ) :
+                                        bool startViewOnly, bool showViewOnlyToggleButton, bool preview ) :
 	QWidget( nullptr ),
 	m_computerControlInterface( computerControlInterface ),
 	m_vncView( new VncViewWidget( computerControlInterface->computer().hostAddress(), -1, this, VncView::RemoteControlMode ) ),
@@ -275,6 +275,11 @@ RemoteAccessWidget::RemoteAccessWidget( const ComputerControlInterface::Pointer&
 	m_vncView->installEventFilter( this );
 	connect( m_vncView, &VncViewWidget::mouseAtBorder, m_toolBar, &RemoteAccessWidgetToolBar::appear );
 	connect( m_vncView, &VncViewWidget::sizeHintChanged, this, &RemoteAccessWidget::updateSize );
+
+    if ( preview )
+    {
+        m_toolBar->hide();
+    }
 
 	showMaximized();
 	VeyonCore::platform().coreFunctions().raiseWindow( this, false );
