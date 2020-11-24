@@ -298,11 +298,14 @@ void ComputerMonitoringWidget::mousePressEvent( QMouseEvent* event )
 {
     if(event->type() == QEvent::MouseButtonPress)
     {
-        if( !m_ignoreMousePressAndHoldEvent )
+        if( event->buttons() == Qt::LeftButton )
         {
-            t_mousePressAndHold.setInterval( 500 );
-            t_mousePressAndHold.start();
-            connect(&t_mousePressAndHold, &QTimer::timeout, this, &ComputerMonitoringWidget::mousePressAndHoldFeature );
+            if( !m_ignoreMousePressAndHoldEvent )
+            {
+                t_mousePressAndHold.setInterval( 500 );
+                t_mousePressAndHold.start();
+                connect(&t_mousePressAndHold, &QTimer::timeout, this, &ComputerMonitoringWidget::mousePressAndHoldFeature );
+            }
         }
         QListView::mousePressEvent(event);
     }
