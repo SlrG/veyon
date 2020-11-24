@@ -46,6 +46,7 @@ public:
 		Internal = 0x0008,
 		Option = 0x0010,
 		Checked = 0x0020,
+        NoContext = 0x0030,
 		Master = 0x0100,
 		Service = 0x0200,
 		Worker = 0x0400,

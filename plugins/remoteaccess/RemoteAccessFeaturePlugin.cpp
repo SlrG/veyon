@@ -37,7 +37,7 @@
 RemoteAccessFeaturePlugin::RemoteAccessFeaturePlugin( QObject* parent ) :
 	QObject( parent ),
     m_remotePreviewFeature( QStringLiteral( "RemotePreview" ),
-                         Feature::Session | Feature::Master,
+                         Feature::NoContext | Feature::Session | Feature::Master,
                          Feature::Uid( "fddd638a-90a7-45a1-a339-ea6409a5eee5" ),
                          Feature::Uid(),
                          tr( "Remote preview" ), {},
