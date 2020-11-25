@@ -281,9 +281,6 @@ RemoteAccessWidget::RemoteAccessWidget( const ComputerControlInterface::Pointer&
         m_toolBar->hide();
     }
 
-    const auto computerMonitoringWidget = masterWindow->findChild<ComputerMonitoringWidget *>();
-    connect( computerMonitoringWidget, &ComputerMonitoringWidget::mousePressAndHoldRelease, this, &QWidget::close );
-
     showMaximized();
 	VeyonCore::platform().coreFunctions().raiseWindow( this, false );
 
