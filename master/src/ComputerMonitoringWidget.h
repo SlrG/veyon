@@ -53,9 +53,6 @@ public:
 	}
     QTimer t_mousePressAndHold;
 
-Q_SIGNALS:
-    void mousePressAndHoldRelease( );
-
 private:
 	void setColors( const QColor& backgroundColor, const QColor& textColor ) override;
 	QJsonArray saveComputerPositions() override;
@@ -86,5 +83,6 @@ private:
 Q_SIGNALS:
 	void computerScreenSizeAdjusted( int size );
     void mousePressAndHold( );
+    void mousePressAndHoldRelease( );
 
 };
