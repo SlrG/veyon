@@ -66,7 +66,8 @@ private:
 	void addSubFeaturesToMenu( const Feature& parentFeature, const FeatureList& subFeatures, const QString& label );
 
 	void runDoubleClickFeature( const QModelIndex& index );
-    void mousePressAndHoldFeature ( );
+    void startMousePressAndHoldFeature ( );
+    void stopMousePressAndHoldFeature ( );
 
     void mousePressEvent( QMouseEvent* event ) override;
     void mouseReleaseEvent( QMouseEvent* event ) override;

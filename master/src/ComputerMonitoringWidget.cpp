@@ -272,7 +272,7 @@ void ComputerMonitoringWidget::runDoubleClickFeature( const QModelIndex& index )
 
 
 
-void ComputerMonitoringWidget::mousePressAndHoldFeature( )
+void ComputerMonitoringWidget::startMousePressAndHoldFeature( )
 {
    Q_EMIT mousePressAndHold( );
    const Feature& feature = master()->featureManager().feature( VeyonCore::config().computerLeftClickAndHoldFeature() );
@@ -292,7 +292,35 @@ void ComputerMonitoringWidget::mousePressAndHoldFeature( )
    }
 }
 
+void ComputerMonitoringWidget::stopMousePressAndHoldFeature( )
+{
+    const Feature& feature = master()->featureManager().feature( VeyonCore::config().computerLeftClickAndHoldFeature() );
+    const auto m_master( VeyonCore::instance()->findChild<VeyonMaster *>() );
+    const auto selectedInterfaces = selectedComputerControlInterfaces();
+    const auto previewHandlingNecessary = feature.uid() == "fddd638a-90a7-45a1-a339-ea6409a5eee5";
+    if( isFeatureOrSubFeatureActive( selectedInterfaces, feature.uid() ) )
+    {
+        master()->featureManager().stopFeature( *m_master, feature, selectedInterfaces );
+    }
+    if ( previewHandlingNecessary )
+    {
+        auto widgets = QApplication::topLevelWidgets();
+        for( const auto& widget : widgets )
+        {
+            auto windowTitle = widget->windowTitle();
+            if ( !windowTitle.isEmpty() )
+            {
+                const auto str = selectedInterfaces.first()->computer().name();
+                if ( windowTitle.contains(str, Qt::CaseInsensitive) )
+                {
+                    widget->close();
+                }
 
+            }
+       }
+    }
+
+}
 
 void ComputerMonitoringWidget::mousePressEvent( QMouseEvent* event )
 {
@@ -304,7 +332,7 @@ void ComputerMonitoringWidget::mousePressEvent( QMouseEvent* event )
             {
                 t_mousePressAndHold.setInterval( 500 );
                 t_mousePressAndHold.start();
-                connect(&t_mousePressAndHold, &QTimer::timeout, this, &ComputerMonitoringWidget::mousePressAndHoldFeature );
+                connect(&t_mousePressAndHold, &QTimer::timeout, this, &ComputerMonitoringWidget::startMousePressAndHoldFeature );
             }
         }
         QListView::mousePressEvent(event);
@@ -318,6 +346,10 @@ void ComputerMonitoringWidget::mouseReleaseEvent( QMouseEvent* event )
     if(event->type() == QEvent::MouseButtonRelease)
     {
         t_mousePressAndHold.stop();
+        if ( m_ignoreMousePressAndHoldEvent )
+        {
+            stopMousePressAndHoldFeature();
+        }
         m_ignoreMousePressAndHoldEvent = false;
         Q_EMIT mousePressAndHoldRelease( );
         QListView::mouseReleaseEvent(event);
@@ -331,6 +363,10 @@ void ComputerMonitoringWidget::mouseMoveEvent( QMouseEvent* event )
     if(event->type() == QEvent::MouseMove)
     {
         t_mousePressAndHold.stop();
+        if ( m_ignoreMousePressAndHoldEvent )
+        {
+            stopMousePressAndHoldFeature();
+        }
         m_ignoreMousePressAndHoldEvent = false;
         Q_EMIT mousePressAndHoldRelease( );
         QListView::mouseMoveEvent(event);
