@@ -283,8 +283,17 @@ void ComputerMonitoringWidget::runDoubleClickFeature( const QModelIndex& index )
 
 
 
+void ComputerMonitoringWidget::resetIgnoreNumberOfMouseEvents( )
+{
+	m_ignoreNumberOfMouseEvents = 3;
+	vCritical() << "ignoreNumberOfMouseEvents set/reset: " << m_ignoreNumberOfMouseEvents;
+}
+
+
+
 void ComputerMonitoringWidget::runMousePressAndHoldFeature( )
 {
+	m_mousePressAndHold.stop();
 	const auto selectedInterfaces = selectedComputerControlInterfaces();
 	if( !m_ignoreMousePressAndHoldEvent &&
 		selectedInterfaces.count() > 0 &&
@@ -292,10 +301,12 @@ void ComputerMonitoringWidget::runMousePressAndHoldFeature( )
 		selectedInterfaces.first()->state() == ComputerControlInterface::State::Connected &&
 		selectedInterfaces.first()->hasValidFramebuffer() )
    {
+		vCritical() << "run MousePressAndHoldFeature";
 		m_ignoreMousePressAndHoldEvent = true;
-		m_ignoreNumberOfMouseEvents = 3;
+		resetIgnoreNumberOfMouseEvents();
 		delete m_computerZoomWidget;
 		m_computerZoomWidget = new ComputerZoomWidget( selectedInterfaces.first()  );
+		connect( m_computerZoomWidget, &ComputerZoomWidget::keypressInComputerZoomWidget, this, &ComputerMonitoringWidget::resetIgnoreNumberOfMouseEvents );
    }
 }
 
@@ -303,6 +314,8 @@ void ComputerMonitoringWidget::runMousePressAndHoldFeature( )
 
 void ComputerMonitoringWidget::stopMousePressAndHoldFeature( )
 {
+	vCritical() << "stop MousePressAndHoldFeature";
+	disconnect( m_computerZoomWidget, &ComputerZoomWidget::keypressInComputerZoomWidget, this, &ComputerMonitoringWidget::resetIgnoreNumberOfMouseEvents );
 	m_ignoreMousePressAndHoldEvent = false;
 	m_ignoreNumberOfMouseEvents = 0;
 	m_computerZoomWidget->close();
@@ -314,10 +327,12 @@ void ComputerMonitoringWidget::stopMousePressAndHoldFeature( )
 
 void ComputerMonitoringWidget::mousePressEvent( QMouseEvent* event )
 {
+	vCritical() << "mouse Press Event fired!";
 	if( event->buttons() == Qt::LeftButton && indexAt(event->pos()).isValid() )
 	{
 		if( !m_ignoreMousePressAndHoldEvent )
 		{
+			vCritical() << "mousePressAndHold Timer started";
 			m_mousePressAndHold.setInterval( 500 );
 			m_mousePressAndHold.start();
 			connect(&m_mousePressAndHold, &QTimer::timeout, this, &ComputerMonitoringWidget::runMousePressAndHoldFeature );
@@ -330,9 +345,11 @@ void ComputerMonitoringWidget::mousePressEvent( QMouseEvent* event )
 
 void ComputerMonitoringWidget::mouseReleaseEvent( QMouseEvent* event )
 {
+	vCritical() << "mouse Release Event fired!";
 	m_mousePressAndHold.stop();
 	if ( m_ignoreMousePressAndHoldEvent )
 	{
+		vCritical() << "stopMousePressAndHoldFeature reason: mouseReleaseEvent";
 		stopMousePressAndHoldFeature();
 	}
 	QListView::mouseReleaseEvent( event );
@@ -342,17 +359,20 @@ void ComputerMonitoringWidget::mouseReleaseEvent( QMouseEvent* event )
 
 void ComputerMonitoringWidget::mouseMoveEvent( QMouseEvent* event )
 {
+	vCritical() << "mouse Move Event fired!";
 	m_mousePressAndHold.stop();
 	if ( m_ignoreNumberOfMouseEvents <= 0 )
 	{
 		if ( m_ignoreMousePressAndHoldEvent )
 		{
+			vCritical() << "stopMousePressAndHoldFeature reason: mouseMoveEvent > 3";
 			stopMousePressAndHoldFeature();
 		}
 
 		QListView::mouseMoveEvent( event );
 	} else
 	{
+		vCritical() << "MouseMoveEvent ignored" << m_ignoreNumberOfMouseEvents;
 		m_ignoreNumberOfMouseEvents--;
 		event->accept();
 	}

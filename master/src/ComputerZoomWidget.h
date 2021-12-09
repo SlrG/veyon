@@ -57,4 +57,7 @@ private:
 
 	VncViewWidget* m_vncView;
 
+Q_SIGNALS:
+	void keypressInComputerZoomWidget( );
+
 } ;
