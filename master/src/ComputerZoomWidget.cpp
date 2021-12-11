@@ -84,52 +84,55 @@ bool ComputerZoomWidget::eventFilter( QObject* object, QEvent* event )
 		vCritical() << "KeyPress Event fired!";
 		Q_EMIT keypressInComputerZoomWidget( );
 
-		if( dynamic_cast<QKeyEvent *>( event )->key() == Qt::Key_Tab )
+		const auto screens = m_vncView->computerControlInterface()->screens();
+		const auto key = dynamic_cast<QKeyEvent *>( event )->key();
+		if ( screens.size() > 1 && ( key == Qt::Key_Tab || key == Qt::Key_Backtab ) )
 		{
-			vCritical() << "Qt::Key_Tab";
-			const auto screens = m_vncView->computerControlInterface()->screens();
-			if(screens.size() > 1)
+			if( key == Qt::Key_Tab )
 			{
+				vCritical() << "Qt::Key_Tab";
 				if ( currentScreen < screens.size() - 1 )
 				{
 					currentScreen++;
 					vCritical() << "Switching to next Screen: " << currentScreen << screens[currentScreen].name << screens[currentScreen].geometry;
-					m_vncView->setViewport(screens[currentScreen].geometry);
 				} else
 				{
 					currentScreen = -1;
 					vCritical() << "Switching to Allscreen View Tab";
-					m_vncView->setViewport({});
 				}
 			}
-			return true;
-		}
 
-		if( dynamic_cast<QKeyEvent *>( event )->key() == Qt::Key_Backtab )
-		{
-			vCritical() << "Qt::Key_Backtab";
-			const auto screens = m_vncView->computerControlInterface()->screens();
-			if(screens.size() > 1)
+			if( key == Qt::Key_Backtab )
 			{
+				vCritical() << "Qt::Key_Backtab";
 				if ( currentScreen == -1 )
 				{
 					currentScreen = screens.size()-1;
 					vCritical() << "Switching to last Screen: " << currentScreen << screens[currentScreen].name << screens[currentScreen].geometry;
-					m_vncView->setViewport(screens[currentScreen].geometry);
 				} else if ( currentScreen > 0 )
 				{
 					currentScreen--;
 					vCritical() << "Switching to previous Screen: " << currentScreen << screens[currentScreen].name << screens[currentScreen].geometry;
-					m_vncView->setViewport(screens[currentScreen].geometry);
 				} else
 				{
 					currentScreen = -1;
 					vCritical() << "Switching to Allscreen View Backtab";
-					m_vncView->setViewport({});
 				}
 			}
+
+			showNormal();
+			if ( currentScreen == -1)
+			{
+				m_vncView->setViewport( {} );
+			}
+			else
+			{
+				m_vncView->setViewport(screens[currentScreen].geometry);
+			}
+			setWindowState(Qt::WindowMaximized);
 			return true;
 		}
+
 		vCritical() << "KeyPress Event forwarded";
 		return false;
 	}
